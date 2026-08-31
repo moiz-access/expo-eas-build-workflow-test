@@ -65,35 +65,30 @@ jobs:
           npx expo-updates fingerprint:generate --platform android > fingerprint.json
           HASH=$(jq -r '.hash' fingerprint.json)
           echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-          echo "🔎 Current build fingerprint: $HASH"
+          echo "🔎 Current fingerprint: $HASH"
 
-      # Look up the most recent finished build on the preview profile and read the fingerprint that build was created with
-      - name: Fetch latest preview build
-        id: latest-build
+      # Look up whether a finished preview build already exists that matches the current fingerprint
+      - name: Check for a compatible existing build
+        id: compare
         run: |
           eas build:list \
             --platform android \
             --profile preview \
             --status finished \
+            --fingerprint-hash "${{ steps.current.outputs.hash }}" \
             --limit 1 \
             --non-interactive \
-            --json > builds.json
+            --json > matching-builds.json
 
-          HASH=$(jq -r '.[0].fingerprintHash // empty' builds.json)
-          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
-          echo "🔎 Latest build fingerprint: $HASH"
+          COUNT=$(jq 'length' matching-builds.json)
+          echo "🔎 Matching builds found: $COUNT"
 
-      # Compare the two fingerprints
-      - name: Compare fingerprints
-        id: compare
-        run: |
-          if [ -z "${{ steps.latest-build.outputs.hash }}" ] || \
-             [ "${{ steps.current.outputs.hash }}" != "${{ steps.latest-build.outputs.hash }}" ]; then
-            echo "❎ Native fingerprint changed (or no prior build found) — running EAS Build"
-            echo "needs-build=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "✅ Native fingerprint unchanged — running EAS Update"
+          if [ "$COUNT" -gt 0 ]; then
+            echo "✅ Compatible build found — running EAS Update"
             echo "needs-build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "❎ No compatible build found — running new EAS Build"
+            echo "needs-build=true" >> "$GITHUB_OUTPUT"
           fi
 
   build:
