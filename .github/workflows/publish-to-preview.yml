@@ -161,4 +161,6 @@ jobs:
 
       # Run update
       - name: Run EAS update
-        run: eas update --branch preview --non-interactive
+        run: |
+          MESSAGE=$(git log -1 --pretty=%s)
+          eas update --branch preview --message "$MESSAGE" --non-interactive
