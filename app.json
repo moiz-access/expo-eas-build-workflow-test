@@ -7,9 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "expoeasbuildworkflowtest",
     "userInterfaceStyle": "automatic",
-    "runtimeVersion": {
-      "policy": "fingerprint"
-    },
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -38,6 +35,9 @@
         }
       ]
     ],
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

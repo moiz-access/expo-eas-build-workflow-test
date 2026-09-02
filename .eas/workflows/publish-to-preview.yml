@@ -1,0 +1,37 @@
+name: Publish to Preview
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    if: ${{ github.ref_name == 'uat' }}
+
+  get_build:
+    name: Check for matching build
+    needs: [fingerprint]
+    type: get-build
+    if: ${{ github.ref_name == 'uat' }}
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      platform: android
+      profile: preview
+
+  # Runs only if no build matches the current fingerprint
+  build:
+    name: EAS Build (Preview)
+    needs: [get_build]
+    type: build
+    if: ${{ github.ref_name == 'uat' && !needs.get_build.outputs.build_id }}
+    params:
+      platform: android
+      profile: preview
+
+  # Runs only if a matching build was found
+  update:
+    name: EAS Update (Preview)
+    needs: [get_build]
+    type: update
+    if: ${{ github.ref_name == 'uat' && needs.get_build.outputs.build_id }}
+    params:
+      platform: android
+      branch: preview
